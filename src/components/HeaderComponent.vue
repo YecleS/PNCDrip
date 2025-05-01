@@ -1,3 +1,35 @@
+<script setup>
+import { ref, onMounted, onBeforeUnmount } from 'vue';
+import PopUpMenu from './UIComponents/PopUpMenu.vue';
+import PrimaryButton from './UIComponents/PrimaryButton.vue';
+
+const isProfileMenuVisible = ref(false);
+const profileRef = ref(null);
+const menuRef = ref(null);
+
+const toggleProfileMenu = () => {
+    isProfileMenuVisible.value = !isProfileMenuVisible.value;
+}
+
+const handleClickOutside = (event) => {
+    const clickedInsideProfile = profileRef.value?.contains(event.target);
+    const clickedInsideMenu = menuRef.value?.menuRoot?.contains(event.target);
+
+    if (!clickedInsideProfile && !clickedInsideMenu) {
+        isProfileMenuVisible.value = false;
+    }
+};
+
+onMounted(() => {
+    document.addEventListener('mousedown', handleClickOutside);
+});
+onBeforeUnmount(() => {
+    document.removeEventListener('mousedown', handleClickOutside);
+})
+
+
+</script>
+
 <template>
     <header>
         <div class="header__section-wrapper">
@@ -13,13 +45,23 @@
             <div class="header__controllers-wrapper">
                 <i class="fa-solid fa-cart-shopping" aria-label="Cart icon"></i>
 
-                <div class="header__profile-wrapper">
+                <div class="header__profile-wrapper" ref="profileRef" @click="toggleProfileMenu">
                     <span>
                         <i class="fa-solid fa-user-large"></i>
                     </span>
                     <p>Hi, Steven</p>
                     <i class="fa-solid fa-caret-down"></i>
                 </div>
+
+                <PopUpMenu ref="menuRef" :visible="isProfileMenuVisible" custom-class="profile-menu-custom-class">
+                    <p style="font-size: 14px; text-align: center;">Employee</p>
+
+                    <hr style="margin-top: 1rem;">
+                    <a href="/">
+                        <PrimaryButton label="Logout" custom-class="primary-button-header-custom-class" />
+                    </a>
+                </PopUpMenu>
+
             </div>
         </div>
     </header>
@@ -97,6 +139,8 @@ nav a {
     align-items: center;
     justify-content: center;
     gap: 1rem;
+
+    position: relative;
 }
 
 .header__controllers-wrapper .fa-cart-shopping {
@@ -135,6 +179,15 @@ nav a {
 .header__profile-wrapper p {
     font-size: 1rem;
     font-weight: 400;
+}
+
+.primary-button-header-custom-class {
+    padding: 5px 10px;
+    font-size: 14px;
+}
+
+.profile-menu-custom-class {
+    margin-top: 1rem;
 }
 
 /* END OF STYLE FOR PROFILE CONTROLLER & CART */

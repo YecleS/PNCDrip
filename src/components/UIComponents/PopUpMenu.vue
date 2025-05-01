@@ -1,8 +1,5 @@
 <script setup>
-import { onMounted, onBeforeUnmount, ref } from 'vue';
-
-// Define the emit event
-const emit = defineEmits(['close']);
+import { ref } from 'vue';
 
 defineProps({
     visible: {
@@ -14,27 +11,14 @@ defineProps({
     }
 });
 
-const menuRef = ref(null);
-
-const handleClickOutside = (event) => {
-    if (menuRef.value && !menuRef.value.contains(event.target)) {
-        emit('close');
-    }
-}
-
-onMounted(() => {
-    document.addEventListener('mousedown', handleClickOutside);
-});
-
-onBeforeUnmount(() => {
-    document.removeEventListener('mousedown', handleClickOutside);
-});
+const menuRoot = ref(null);
+defineExpose({ menuRoot });
 
 </script>
 
 <template>
     <transition name="fade">
-        <div class="popup-menu" ref="menuRef" :class="customClass" v-show="visible">
+        <div ref="menuRoot" :class="['popup-menu', customClass]" v-show="visible">
             <slot />
         </div>
     </transition>

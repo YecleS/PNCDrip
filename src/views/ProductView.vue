@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted, onBeforeUnmount } from 'vue';
 import PrimaryButton from '@/components/UIComponents/PrimaryButton.vue';
 import PopUpMenu from '@/components/UIComponents/PopUpMenu.vue';
 import router from '@/router';
@@ -8,6 +8,8 @@ const productQty = ref(1);
 const selectedSize = ref('XS');
 const selectedModeOfPayment = ref('cod');
 const isPopUpMenuVisible = ref(false);
+const ellipsisRef = ref(null);
+const menuRef = ref(null);
 
 const togglePopUpMenu = () => {
     isPopUpMenuVisible.value = !isPopUpMenuVisible.value
@@ -16,6 +18,15 @@ const togglePopUpMenu = () => {
 const closePopUpMenu = () => {
     isPopUpMenuVisible.value = false;
 };
+
+const handleClickOutside = (event) => {
+    const clickedOutsideEllipsis = ellipsisRef.value?.contains(event.target);
+    const clickedOutsideMenu = menuRef.value?.menuRoot?.contains(event.target);
+
+    if (!clickedOutsideEllipsis && !clickedOutsideMenu) {
+        isPopUpMenuVisible.value = false;
+    }
+}
 
 const increaseQty = () => {
     return productQty.value++
@@ -35,6 +46,14 @@ const addToCart = () => {
     console.log(productQty.value, selectedSize.value, selectedModeOfPayment.value)
 }
 
+onMounted(() => {
+    document.addEventListener('click', handleClickOutside);
+})
+
+onBeforeUnmount(() => {
+    document.addEventListener('click', handleClickOutside)
+})
+
 </script>
 
 <template>
@@ -46,9 +65,9 @@ const addToCart = () => {
             <div style="display: flex; align-items: flex-start; justify-content: space-between; position: relative;">
                 <h3>Compression Training Shorts and resistance t-shirt</h3>
                 <i class="fa-solid fa-ellipsis-vertical" style="font-size: 1rem; cursor: pointer;"
-                    @click="togglePopUpMenu"></i>
+                    @click="togglePopUpMenu" ref="ellipsisRef"></i>
 
-                <PopUpMenu :visible="isPopUpMenuVisible" @close="closePopUpMenu">
+                <PopUpMenu ref="menuRef" :visible="isPopUpMenuVisible" @close="closePopUpMenu">
                     <a href="#"><i class="fa-solid fa-pen-to-square"
                             style="font-size: 1.2rem; margin-right: 0.2rem;"></i> Edit
                         Product</a>
