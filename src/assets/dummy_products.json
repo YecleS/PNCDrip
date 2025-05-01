@@ -1,0 +1,72 @@
+[
+  {
+    "name": "Athletic Performance Tee",
+    "description": "Lightweight, sweat-wicking t-shirt designed for maximum mobility during workouts.",
+    "price": 12.99,
+    "stock": 45,
+    "image": "https://res.cloudinary.com/dfdkbgjgw/image/upload/v1746021038/Rectangle_9-1_brxoag.webp"
+  },
+  {
+    "name": "Compression Training Shorts and resistance t-shirt",
+    "description": "Flexible, high-stretch shorts that enhance performance and reduce muscle fatigue.",
+    "price": 24.5,
+    "stock": 120,
+    "image": "https://res.cloudinary.com/dfdkbgjgw/image/upload/v1746021038/Rectangle_9-1_brxoag.webp"
+  },
+  {
+    "name": "Sleeveless Muscle Tank",
+    "description": "Breathable tank top ideal for upper body workouts and hot-weather training.",
+    "price": 89.99,
+    "stock": 30,
+    "image": "https://res.cloudinary.com/dfdkbgjgw/image/upload/v1746021038/Rectangle_9-1_brxoag.webp"
+  },
+  {
+    "name": "Yoga Stretch Leggings",
+    "description": "High-waisted leggings offering a full range of motion and snug comfort for yoga or pilates.",
+    "price": 29.95,
+    "stock": 75,
+    "image": "https://res.cloudinary.com/dfdkbgjgw/image/upload/v1746021038/Rectangle_9-1_brxoag.webp"
+  },
+  {
+    "name": "Performance Jogger Pants",
+    "description": "Slim-fit joggers designed with moisture-wicking fabric and stretch for active lifestyles.",
+    "price": 18.75,
+    "stock": 60,
+    "image": "https://res.cloudinary.com/dfdkbgjgw/image/upload/v1746021038/Rectangle_9-1_brxoag.webp"
+  },
+  {
+    "name": "Lightweight Windbreaker",
+    "description": "Water-resistant windbreaker jacket with zip pockets, ideal for outdoor training.",
+    "price": 39.9,
+    "stock": 22,
+    "image": "https://res.cloudinary.com/dfdkbgjgw/image/upload/v1746021038/Rectangle_9-1_brxoag.webp"
+  },
+  {
+    "name": "Wrist Wrap Gym Hoodie",
+    "description": "Comfortable hoodie with built-in wrist wraps for support during lifting sessions.",
+    "price": 14.99,
+    "stock": 90,
+    "image": "https://res.cloudinary.com/dfdkbgjgw/image/upload/v1746021038/Rectangle_9-1_brxoag.webp"
+  },
+  {
+    "name": "Breathable Running Socks",
+    "description": "Cushioned socks with mesh ventilation zones to keep feet cool and dry during runs.",
+    "price": 59.99,
+    "stock": 35,
+    "image": "https://res.cloudinary.com/dfdkbgjgw/image/upload/v1746021038/Rectangle_9-1_brxoag.webp"
+  },
+  {
+    "name": "Mesh Gym Tank Top",
+    "description": "Sleeveless mesh top that enhances breathability and freedom of movement in the gym.",
+    "price": 9.99,
+    "stock": 150,
+    "image": "https://res.cloudinary.com/dfdkbgjgw/image/upload/v1746021038/Rectangle_9-1_brxoag.webp"
+  },
+  {
+    "name": "Support Compression Shirt",
+    "description": "Compression-fit shirt providing muscle support and enhanced circulation during exercise.",
+    "price": 21.0,
+    "stock": 48,
+    "image": "https://res.cloudinary.com/dfdkbgjgw/image/upload/v1746021038/Rectangle_9-1_brxoag.webp"
+  }
+]

@@ -1,0 +1,42 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Rubik', sans-serif;
+}
+
+:root {
+  --primary-color: #349905;
+  --muted-color: #6c757d;
+  --light-green: #cdf0cd;
+}
+
+a {
+  text-decoration: none;
+  color: black;
+}
+
+.view-wrapper {
+  width: 1140px;
+  margin-inline: auto;
+}
+
+h1 {
+  font-size: 50px;
+  font-weight: 500;
+}
+
+h2 {
+  font-size: 25px;
+  font-weight: 500;
+}
+
+h3 {
+  font-size: 23px;
+  font-weight: 500;
+}
+
+h4 {
+  font-size: 18px;
+  font-weight: 500;
+}
