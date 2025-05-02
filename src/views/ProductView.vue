@@ -145,8 +145,7 @@ onBeforeUnmount(() => {
     grid-template-columns: 1fr 1fr;
     gap: 2rem;
 
-    padding: 30px 0px;
-
+    padding: 100px 0px;
     max-width: 900px;
 }
 

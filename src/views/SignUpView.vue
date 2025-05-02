@@ -1,47 +1,60 @@
 <script setup>
 import axios from 'axios';
-import { ref } from 'vue';
-import router from '@/router';
-import * as yup from 'yup';
 import FieldErrorMessage from '@/components/UIComponents/FieldErrorMessage.vue';
+import { ref } from 'vue';
+import * as yup from 'yup';
 import LabeledInputText from '@/components/UIComponents/LabeledInputText.vue';
 import LabeledInputPassword from '@/components/UIComponents/LabeledInputPassword.vue';
 import PrimaryButton from '@/components/UIComponents/PrimaryButton.vue';
 import { useToast } from 'vue-toastification';
 import { useAuth } from '@/composables/useAuth';
+import router from '@/router';
 
 const toast = useToast();
 const { setAuthData } = useAuth();
 
 const formData = ref({
     username: '',
+    email: '',
     password: ''
 })
 
 const fieldErrors = ref({
     username: '',
+    email: '',
     password: ''
 });
 
 const schema = yup.object({
-    username: yup.string().required('Username is required'),
-    password: yup.string().required('Password is required')
+    username: yup
+        .string()
+        .min(5, 'Username must be at least 5 characters')
+        .required('Username is required'),
+
+    email: yup
+        .string()
+        .email('Must be a valid email')
+        .required('Email is required'),
+
+    password: yup
+        .string()
+        .min(5, 'Password must be at least 5 characters')
+        .required('Password is required'),
 });
 
-async function login(e) {
+const signup = async (e) => {
     e.preventDefault();
-    fieldErrors.value = { username: '', password: '' };
+    fieldErrors.value = { username: '', email: '', password: '' };
 
     try {
-        // Validate form data using Yup
         await schema.validate(formData.value, { abortEarly: false });
 
-        const response = await axios.post('http://127.0.0.1:8000/api/login/', {
+        const response = await axios.post('http://127.0.0.1:8000/api/register/', {
             username: formData.value.username,
+            email: formData.value.email,
             password: formData.value.password
         });
 
-        // Handle successful login (store tokens)
         if (response.data.access && response.data.refresh) {
             setAuthData({
                 access: response.data.access,
@@ -52,11 +65,10 @@ async function login(e) {
             })
         }
 
-        // Clear form data after login
-        formData.value = { username: '', password: '' };
+        formData.value = { username: '', email: '', password: '' };
         router.push('/');
     } catch (error) {
-        // Check if the error is a validation error from Yup
+
         if (error.name === 'ValidationError') {
             if (error.inner) {
                 error.inner.forEach(err => {
@@ -64,21 +76,20 @@ async function login(e) {
                 });
             }
         } else {
-            toast.error('Login failed: ' + (error.response?.data?.error || error.message));
+            toast.error('Registration failed: ' + (error.response?.data?.error || error.message));
         }
     }
-}
-
+};
 </script>
 
 <template>
-    <div class="view-wrapper" id="login-view">
-        <div class="login-views-wrapper">
-            <img src="../assets/images/login-img.jpg" alt="Login Image">
+    <div class="view-wrapper" id="signup-view">
+        <div class="signup-view-wrapper">
+            <img src="../assets/images/signup-img.jpg" alt="Login Image">
 
             <div class="forms-wrapper">
                 <p>PNC<span style="color: var(--primary-color);">Drip</span></p>
-                <h2>Login Now</h2>
+                <h2>Join Us Now</h2>
 
                 <form>
                     <div class="field-group-wrapper">
@@ -88,13 +99,19 @@ async function login(e) {
                     </div>
 
                     <div class="field-group-wrapper" style="margin-top: 1.5rem;">
+                        <LabeledInputText label="Email" name="email" placeholder="Enter your email"
+                            v-model="formData.email" />
+                        <FieldErrorMessage :message="fieldErrors.email" :visibility="!!fieldErrors.email" />
+                    </div>
+
+                    <div class="field-group-wrapper" style="margin-top: 1.5rem;">
                         <LabeledInputPassword label="Password" name="password" placeholder="Enter your password"
                             v-model="formData.password" />
                         <FieldErrorMessage :message="fieldErrors.password" :visibility="!!fieldErrors.password" />
                     </div>
 
-                    <PrimaryButton label="Login" class="login-button-custom-class" @click="login" />
-                    <p class="registration-link"><a href="/sign-up">Don't Have an Account ? Register Here</a></p>
+                    <PrimaryButton label="Register Now" class="signup-button-custom-class" @click="signup" />
+                    <p class="login-link"><a href="/login">Already Have an Account ? Login Here</a></p>
                 </form>
             </div>
         </div>
@@ -103,11 +120,11 @@ async function login(e) {
 
 
 <style scoped>
-#login-view {
+#signup-view {
     width: 1000px;
 }
 
-.login-views-wrapper {
+.signup-view-wrapper {
     display: grid;
     grid-template-columns: 0.8fr 1fr;
     box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.25);
@@ -117,7 +134,7 @@ async function login(e) {
     padding: 15px;
 }
 
-.login-views-wrapper img {
+.signup-view-wrapper img {
     width: 100%;
     height: auto;
     object-fit: cover;
@@ -159,17 +176,17 @@ async function login(e) {
     width: 100%;
 }
 
-.login-button-custom-class {
+.signup-button-custom-class {
     width: 100%;
     margin-top: 2rem;
 }
 
-.registration-link {
+.login-link {
     text-align: center;
     margin-top: 1rem;
 }
 
-.registration-link a {
+.login-link a {
     font-size: 14px;
     font-weight: 400;
 }

@@ -2,6 +2,10 @@
 import { ref, onMounted, onBeforeUnmount } from 'vue';
 import PopUpMenu from './UIComponents/PopUpMenu.vue';
 import PrimaryButton from './UIComponents/PrimaryButton.vue';
+import { useAuth } from '@/composables/useAuth';
+import router from '@/router';
+
+const { username, role, clearAuthData } = useAuth();
 
 const isProfileMenuVisible = ref(false);
 const profileRef = ref(null);
@@ -27,6 +31,15 @@ onBeforeUnmount(() => {
     document.removeEventListener('mousedown', handleClickOutside);
 })
 
+const login = () => {
+    router.push('/login');
+}
+
+const logout = () => {
+    clearAuthData();
+
+    window.location.href = '/';
+}
 
 </script>
 
@@ -43,22 +56,30 @@ onBeforeUnmount(() => {
             </nav>
 
             <div class="header__controllers-wrapper">
-                <i class="fa-solid fa-cart-shopping" aria-label="Cart icon"></i>
+                <a href="/cart" v-show="!!username">
+                    <i class="fa-solid fa-cart-shopping" aria-label="Cart icon"></i>
+                </a>
 
-                <div class="header__profile-wrapper" ref="profileRef" @click="toggleProfileMenu">
+
+                <div class="header__profile-wrapper" ref="profileRef" @click="toggleProfileMenu" v-show="!!username">
                     <span>
                         <i class="fa-solid fa-user-large"></i>
                     </span>
-                    <p>Hi, Steven</p>
+                    <p>Hi, {{ username }}</p>
                     <i class="fa-solid fa-caret-down"></i>
                 </div>
 
+                <div v-show="!username">
+                    <PrimaryButton label="Login" @click="login" />
+                </div>
+
                 <PopUpMenu ref="menuRef" :visible="isProfileMenuVisible" custom-class="profile-menu-custom-class">
-                    <p style="font-size: 14px; text-align: center;">Employee</p>
+                    <p style="font-size: 14px; text-align: center; text-transform: capitalize;">{{ role }}</p>
 
                     <hr style="margin-top: 1rem;">
                     <a href="/">
-                        <PrimaryButton label="Logout" custom-class="primary-button-header-custom-class" />
+                        <PrimaryButton label="Logout" custom-class="primary-button-header-custom-class"
+                            @click="logout" />
                     </a>
                 </PopUpMenu>
 
