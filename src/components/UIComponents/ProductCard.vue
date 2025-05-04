@@ -1,46 +1,37 @@
 <script setup>
 import { computed } from 'vue';
+import { API_BASE_URL } from '@/config.js';
 
 const props = defineProps({
-    productImage: {
-        type: String
-    },
-    productName: {
-        type: String
-    },
-    productDescription: {
-        type: String
-    },
-    productPrice: {
-        type: Number
-    },
-    productStock: {
-        type: Number
+    products: {
+        type: Object,
     }
+
 });
 
 const limitDescription = computed(() => {
-    return props.productDescription.slice(0, 50);
+    return props.products.description.slice(0, 50)
 });
 
 </script>
 
 
 <template>
-    <a href="/product-view">
+    <RouterLink :to="`/product-view/${products.id}`">
         <div class="product-card__wrapper">
-            <img :src="productImage" alt="Product image" />
+            <img :src="`${API_BASE_URL}${products.image}`" alt="Product image" />
 
             <div class="product-card__content-wrapper">
-                <h4>{{ productName }}</h4>
+                <h4 style="text-transform: capitalize;">{{ products.name }}</h4>
                 <p style="margin-top: 0.5rem; font-size: 14px; font-weight: 400;">{{ limitDescription }}...</p>
                 <footer>
-                    <p style="font-size: 1.1rem; font-weight: 500;">₱ {{ productPrice }}</p>
-                    <p style="font-size: 14px; font-weight: 400; color: var(--muted-color);">{{ productStock }} left</p>
+                    <p style="font-size: 1.1rem; font-weight: 500;">₱ {{ products.price }}</p>
+                    <p style="font-size: 14px; font-weight: 400; color: var(--muted-color);">{{ products.stock }}
+                        left</p>
                 </footer>
             </div>
         </div>
-    </a>
+    </RouterLink>
 
 </template>
 
@@ -49,6 +40,7 @@ const limitDescription = computed(() => {
     display: flex;
     flex-direction: column;
     height: 100%;
+    max-width: 300px;
 }
 
 .product-card__wrapper img {

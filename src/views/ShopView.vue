@@ -1,35 +1,89 @@
 <script setup>
+import { ref, onMounted, computed } from 'vue';
+import axios from 'axios';
+import { useAuth } from '@/composables/useAuth';
 import ProductCard from '@/components/UIComponents/ProductCard.vue';
-import DummyProducts from '../assets/dummy_products.json';
 import PrimaryButton from '@/components/UIComponents/PrimaryButton.vue';
+import LoadingSpinner from '@/components/UIComponents/LoadingSpinner.vue';
 
+const { userID, role } = useAuth();
+const products = ref([]);
+const isLoading = ref(true);
+
+const searchQuery = ref('');
+const sortOption = ref('')
+
+const fetchProducts = async () => {
+    try {
+        const response = await axios.get('http://localhost:8000/api/products/');
+        products.value = response.data;
+    } catch (error) {
+        console.error('Error fetching products:', error);
+    } finally {
+        isLoading.value = false;
+    }
+};
+
+onMounted(fetchProducts);
+
+const filteredProducts = computed(() => {
+
+    let filtered = products.value.filter(product => {
+        return product.name.toLowerCase().includes(searchQuery.value.toLowerCase());
+    });
+
+    switch (sortOption.value) {
+        case 'priceAsc':
+            filtered.sort((a, b) => a.price - b.price);
+            break;
+        case 'priceDesc':
+            filtered.sort((a, b) => b.price - a.price);
+            break;
+        case 'stockAsc':
+            filtered.sort((a, b) => a.stock - b.stock);
+            break;
+        case 'stockDesc':
+            filtered.sort((a, b) => b.stock - a.stock);
+            break;
+    }
+
+    return filtered;
+});
 </script>
 
 <template>
     <div class="view-wrapper" id="shop-view">
         <div class="filters-wrapper">
-            <input type="text" name="search" placeholder="Search a product" class="search-field" autocomplete="off">
+            <input type="text" name="search" placeholder="Search a product" class="search-field" v-model="searchQuery"
+                autocomplete="off">
 
             <div class="filter-field-wrapper" style="margin-top: 2rem;">
                 <hr style="border: none; border-top: 1px solid gainsboro;">
                 <p class="filter-menu-label">Filter by prices</p>
-                <p class="filter-label">Price <i class="fa-solid fa-caret-up"></i></p>
-                <p class="filter-label">Price <i class="fa-solid fa-caret-down"></i></p>
+                <p class="filter-label" @click="sortOption = 'priceAsc'">Price <i class="fa-solid fa-caret-up"></i></p>
+                <p class="filter-label" @click="sortOption = 'priceDesc'">Price <i class="fa-solid fa-caret-down"></i>
+                </p>
             </div>
 
             <div class="filter-field-wrapper" style="margin-top: 2rem;">
                 <hr style="border: none; border-top: 1px solid gainsboro;">
                 <p class="filter-menu-label">Filter by stocks</p>
-                <p class="filter-label">Stocks <i class="fa-solid fa-caret-up"></i></p>
-                <p class="filter-label">Stocks <i class="fa-solid fa-caret-down"></i></p>
+                <p class="filter-label" @click="sortOption = 'stockAsc'">Stocks <i class="fa-solid fa-caret-up"></i></p>
+                <p class="filter-label" @click="sortOption = 'stockDesc'">Stocks <i class="fa-solid fa-caret-down"></i>
+                </p>
             </div>
 
-            <PrimaryButton label="Create Product" custom-class="primary-button-custom-class" />
+            <a href="/add-product">
+                <PrimaryButton label="Create Product" custom-class="primary-button-custom-class"
+                    v-if="userID && role === 'employee'" />
+            </a>
+
         </div>
+
+        <LoadingSpinner v-if="isLoading" />
+
         <div class="cards-wrapper">
-            <ProductCard v-for="product in DummyProducts" :key="product.name" :product-image="product.image"
-                :product-name="product.name" :product-description="product.description" :product-price="product.price"
-                :product-stock="product.stock" />
+            <ProductCard v-for="product in filteredProducts" :key="product.id" :products="product" />
         </div>
     </div>
 </template>
@@ -42,6 +96,7 @@ import PrimaryButton from '@/components/UIComponents/PrimaryButton.vue';
 
     padding: 30px 0;
     gap: 1.5rem;
+    min-height: 100vh;
 }
 
 .filters-wrapper {

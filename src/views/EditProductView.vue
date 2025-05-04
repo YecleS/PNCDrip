@@ -1,20 +1,27 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
+import { API_BASE_URL } from '@/config';
 import * as yup from 'yup';
 import axios from 'axios';
-import router from '@/router';
+import { useRoute } from 'vue-router';
 import LoadingSpinner from '@/components/UIComponents/LoadingSpinner.vue';
-import LabeledInputImage from '@/components/UIComponents/LabeledInputImage.vue';
 import FieldErrorMessage from '@/components/UIComponents/FieldErrorMessage.vue';
 import PrimaryButton from '@/components/UIComponents/PrimaryButton.vue';
 import LabeledInputText from '@/components/UIComponents/LabeledInputText.vue';
 import LabeledInputTextArea from '@/components/UIComponents/LabeledInputTextArea.vue';
 import LabeledInputNumber from '@/components/UIComponents/LabeledInputNumber.vue';
+import router from '@/router';
 
+const route = useRoute();
+const productId = route.params.id;
 
 const isLoading = ref();
 
+const imageFile = ref(null);
+const imagePreview = ref('');
+
 const formValues = ref({
+    id: 0,
     imageUrl: null,
     productName: '',
     description: '',
@@ -40,32 +47,76 @@ const schema = yup.object({
     price: yup.number().min(1, 'Price must be greater than 0').required('Price is required'),
 });
 
-const addProduct = async (e) => {
+// Handle file input
+const handleFileChange = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+        imageFile.value = file;
+        imagePreview.value = URL.createObjectURL(file);
+        formValues.value.imageUrl = file; // for validation
+    }
+};
+
+
+const fetchProduct = async () => {
+    isLoading.value = true;
+
+    try {
+        const response = await axios.get(`${API_BASE_URL}/api/product/${productId}/`);
+
+        if (response && response.data) {
+            const data = response.data;
+
+            formValues.value = {
+                id: data.id,
+                imageUrl: data.image,
+                productName: data.name,
+                description: data.description,
+                stocks: Number(data.stock),
+                price: Number(data.price),
+            };
+            imagePreview.value = `${API_BASE_URL}${data.image}`;
+        }
+    } catch (err) {
+        console.error('Fetch product error:', err);
+    } finally {
+        isLoading.value = false;
+    }
+};
+
+onMounted(() => {
+    fetchProduct();
+})
+
+
+const updateProduct = async (e) => {
     e.preventDefault();
     fieldErrors.value = { imageUrl: null, productName: '', description: '', stocks: '', price: '' };
-
     isLoading.value = true;
+
     try {
 
         await schema.validate(formValues.value, { abortEarly: false });
 
         const formData = new FormData();
+        formData.append('id', formValues.value.id);
         formData.append('name', formValues.value.productName);
         formData.append('description', formValues.value.description);
         formData.append('stock', formValues.value.stocks);
         formData.append('price', formValues.value.price);
         formData.append('image', formValues.value.imageUrl);
 
-        await axios.post('http://localhost:8000/api/add-product/', formData, {
+        const response = await axios.put(`${API_BASE_URL}/api/product/${productId}/edit/`, formData, {
             headers: {
                 'Content-Type': 'multipart/form-data',
             },
         });
 
-        console.log(formValues.value.imageUrl)
-        formValues.value = { imageUrl: null, productName: '', description: '', stocks: 0, price: 0 };
+        if (response && response.data) {
+            router.push(`/product-view/${productId}`)
+        }
 
-        router.push('/shop');
+        formValues.value = { id: 0, imageUrl: null, productName: '', description: '', stocks: 0, price: 0 };
     } catch (error) {
         // Check if the error is a validation error from Yup
         if (error.name === 'ValidationError') {
@@ -75,6 +126,7 @@ const addProduct = async (e) => {
                 });
             }
         }
+
     } finally {
         isLoading.value = false
     }
@@ -82,15 +134,24 @@ const addProduct = async (e) => {
 
 </script>
 
+
 <template>
-    <div class="view-wrapper" id="add-product-view">
-        <h3>Add Product</h3>
+    <div class="view-wrapper" id="edit-product-view">
+        <h3>Edit Product</h3>
 
         <form>
-            <div>
-                <LabeledInputImage v-model="formValues.imageUrl" />
+            <div class="labeled-input-image">
+                <div class="image-container">
+                    <img v-if="imagePreview" :src="imagePreview" alt="Preview" class="image-preview" />
+                    <div v-else class="image-placeholder"></div>
+                </div>
+
+                <label class="label-text">Product Image</label>
+                <input type="file" accept="image/jpeg, image/png, image/jpg, image/webp" class="file-input"
+                    @change="handleFileChange" />
                 <FieldErrorMessage :message="fieldErrors.imageUrl" :visibility="!!fieldErrors.imageUrl" />
             </div>
+
             <div class="field-group-wrapper">
                 <LabeledInputText label="Product name" placeholder="Enter product name"
                     v-model="formValues.productName" />
@@ -113,32 +174,104 @@ const addProduct = async (e) => {
                 <FieldErrorMessage :message="fieldErrors.price" :visibility="!!fieldErrors.price" />
             </div>
 
-            <PrimaryButton label="Add Product" @click="addProduct" custom-class="add-product-button" />
+            <PrimaryButton label="Update Product" @click="updateProduct" custom-class="edit-product-button" />
         </form>
 
         <LoadingSpinner v-if="isLoading" />
     </div>
 </template>
 
+
 <style scoped>
-#add-product-view {
+#edit-product-view {
     padding: 5rem 0;
     min-height: 100vh;
 
     max-width: 400px;
 }
 
-#add-product-view h3 {
+#edit-product-view h3 {
     text-align: center;
     margin-bottom: 3rem;
 }
 
-#add-product-view .field-group-wrapper {
+#edit-product-view .field-group-wrapper {
     margin-top: 1rem;
 }
 
-.add-product-button {
+.edit-product-button {
     width: 100%;
     margin-top: 2rem;
+}
+
+/* IMAGE INPUT STYLE */
+.labeled-input-image {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.image-container {
+    width: 100%;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.image-preview {
+    width: auto;
+    max-height: 200px;
+    object-fit: cover;
+    border-radius: 8px;
+    border: 2px solid #ddd;
+}
+
+.image-placeholder {
+    width: 100%;
+    height: 150px;
+    border-radius: 8px;
+    border: 2px dashed #ccc;
+    background-color: #fafafa;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #aaa;
+    font-size: 1rem;
+    text-align: center;
+}
+
+.label-text {
+    font-size: 1rem;
+    font-weight: 400;
+    margin-bottom: 0.5rem;
+}
+
+.file-input {
+    padding: 6px;
+    border: 1px solid #2e7d32;
+    border-radius: 4px;
+    background-color: #d4edda;
+    font-size: 0.95rem;
+    cursor: pointer;
+    color: black;
+    transition: border-color 0.3s ease;
+    width: 100%;
+}
+
+.file-input::-webkit-file-upload-button {
+    background-color: #90ee90;
+    color: black;
+    border: 1px solid #2e7d32;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.file-input::-webkit-file-upload-button:hover {
+    background-color: #7bdc7b;
+}
+
+.file-input:hover {
+    border-color: #4CAF50;
 }
 </style>

@@ -29,7 +29,8 @@ const schema = yup.object({
     username: yup
         .string()
         .min(5, 'Username must be at least 5 characters')
-        .required('Username is required'),
+        .required('Username is required')
+        .matches(/^[a-zA-Z0-9\s]*$/, 'Product name can only contain letters, numbers, and spaces'),
 
     email: yup
         .string()

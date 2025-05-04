@@ -1,12 +1,27 @@
 <script setup>
 import { ref, onMounted, onBeforeUnmount } from 'vue';
+import { API_BASE_URL } from '@/config';
+import { useRoute, RouterLink } from 'vue-router';
+import { useAuth } from '@/composables/useAuth';
+import { useToast } from 'vue-toastification';
+import axios from 'axios';
+import router from '@/router';
 import PrimaryButton from '@/components/UIComponents/PrimaryButton.vue';
 import PopUpMenu from '@/components/UIComponents/PopUpMenu.vue';
-import router from '@/router';
+import LoadingSpinner from '@/components/UIComponents/LoadingSpinner.vue';
+
+
+const route = useRoute();
+const toast = useToast();
+const { username, role, userID } = useAuth();
+const productId = route.params.id;
+
+const selectedProduct = ref({});
+const isLoading = ref(true);
+const error = ref(null);
 
 const productQty = ref(1);
 const selectedSize = ref('XS');
-const selectedModeOfPayment = ref('cod');
 const isPopUpMenuVisible = ref(false);
 const ellipsisRef = ref(null);
 const menuRef = ref(null);
@@ -39,50 +54,127 @@ const decreaseQty = () => {
 }
 
 const navigateToShop = () => {
-    router.push('/')
+    router.push('/shop')
 }
 
-const addToCart = () => {
-    console.log(productQty.value, selectedSize.value, selectedModeOfPayment.value)
-}
+const addToCart = async () => {
+    if (username.value) {
+        const cartItem = {
+            user_id: userID.value,
+            product_id: productId,
+            name: selectedProduct.value.name,
+            qty: productQty.value,
+            size: selectedSize.value
+        };
+
+        try {
+            await axios.post(`${API_BASE_URL}/api/cart/add/`, cartItem, {
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            toast.success('Product Added to Cart Successfully');
+
+            // Reset values after success
+            productQty.value = 1;
+            selectedSize.value = 'XS';
+        } catch (error) {
+            console.error('Failed to add to cart:', error);
+            toast.error('Failed to add product to cart.');
+        }
+    } else {
+        router.push('/login');
+    }
+};
+
+const fetchProduct = async () => {
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/product/${productId}/`);
+        const data = await response.json();
+
+        if (response.ok && data) {
+            selectedProduct.value = data;
+        } else {
+            throw new Error('Product does not exist');
+        }
+    } catch (err) {
+        console.error('Fetch product error:', err);
+        error.value = 'PRODUCT DOESNT EXIST'; // Set the error message here
+    } finally {
+        isLoading.value = false;
+    }
+};
+
+const deleteProduct = async (productId) => {
+
+    const confirmed = window.confirm('Are you sure you want to delete this product?');
+    if (!confirmed) return;
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/product/${productId}/delete/`, {
+            method: 'DELETE',
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            router.push('/shop');
+        } else {
+            alert(result.error || 'Failed to delete product');
+        }
+    } catch (error) {
+        console.error('Delete failed:', error);
+    }
+};
+
 
 onMounted(() => {
     document.addEventListener('click', handleClickOutside);
+    fetchProduct();
 })
 
 onBeforeUnmount(() => {
     document.addEventListener('click', handleClickOutside)
 })
-
 </script>
 
 <template>
     <div class="view-wrapper" id="product-view">
-        <img src="https://res.cloudinary.com/dfdkbgjgw/image/upload/v1746021038/Rectangle_9-1_brxoag.webp"
-            alt="product image">
+        <div v-show="error" class="error-message" style="color: red; margin-top: 2rem;">
+            <p>{{ error }}</p>
+            <a href="/shop">
+                <PrimaryButton label="Go Back to Shopping" @click="navigateToShop" />
+            </a>
+        </div>
 
-        <div class="content-wrapper">
+        <img :src="`${API_BASE_URL}${selectedProduct.image}`" alt="product image" v-show="!error">
+
+        <div class="content-wrapper" v-show="!error">
             <div style="display: flex; align-items: flex-start; justify-content: space-between; position: relative;">
-                <h3>Compression Training Shorts and resistance t-shirt</h3>
+                <h3>{{ selectedProduct.name }}</h3>
                 <i class="fa-solid fa-ellipsis-vertical" style="font-size: 1rem; cursor: pointer;"
-                    @click="togglePopUpMenu" ref="ellipsisRef"></i>
+                    @click="togglePopUpMenu" ref="ellipsisRef" v-if="username && role === 'employee'"></i>
 
                 <PopUpMenu ref="menuRef" :visible="isPopUpMenuVisible" @close="closePopUpMenu">
-                    <a href="#"><i class="fa-solid fa-pen-to-square"
-                            style="font-size: 1.2rem; margin-right: 0.2rem;"></i> Edit
-                        Product</a>
-                    <a href="#"><i class="fa-solid fa-trash" style="font-size: 1.2rem; margin-right: 0.2rem;"></i>
+                    <RouterLink :to="`/edit-product/${productId}`">
+                        <p><i class="fa-solid fa-pen-to-square" style="font-size: 1.2rem; margin-right: 0.2rem;"></i>
+                            Edit
+                            Product</p>
+                    </RouterLink>
+
+                    <a href="#" @click="deleteProduct(productId)"><i class="fa-solid fa-trash"
+                            style="font-size: 1.2rem; margin-right: 0.2rem;"></i>
                         Delete Product</a>
                 </PopUpMenu>
             </div>
 
             <p style="font-size: 1rem; margin-top: 1rem;">
-                Flexible, high-stretch shorts that enhance performance and
-                reduce muscle
-                fatigue.
+                {{ selectedProduct.description }}
             </p>
-            <p style="font-size: 14px; color: var(--muted-color); margin-top: 0.5rem;">35003 stocks left</p>
-            <p style="margin-top: 2rem; font-size: 1.3rem; font-weight: 400;">₱ 24.5</p>
+            <p style="font-size: 14px; color: var(--muted-color); margin-top: 0.5rem;">{{ selectedProduct.stock }}
+                stocks left</p>
+            <p style="margin-top: 2rem; font-size: 1.3rem; font-weight: 400;">₱ {{ selectedProduct.price }}</p>
 
 
 
@@ -108,27 +200,6 @@ onBeforeUnmount(() => {
                         </label>
                     </div>
                 </div>
-
-
-                <div class="field-group">
-                    <p style="font-size: 14px; color: var(--muted-color); margin-top: 2.3rem;">
-                        Select Mode of Payment
-                    </p>
-
-                    <div class="mode-of-payment-wrapper">
-                        <label class="payment-label">
-                            <input type="radio" name="payment" value="cod" v-model="selectedModeOfPayment"
-                                class="payment-field" />
-                            <i class="fa-solid fa-truck"></i>
-                            <div class="description-wrapper">
-                                <span>Cash on Delivery</span>
-                                <span style="font-size: 13px; color: var(--muted-color);">
-                                    Pay as you receive your parcel
-                                </span>
-                            </div>
-                        </label>
-                    </div>
-                </div>
             </form>
 
             <footer>
@@ -136,6 +207,9 @@ onBeforeUnmount(() => {
                 <PrimaryButton label="Add To Cart" custom-class="primary-button-custom-style" @click="addToCart" />
             </footer>
         </div>
+
+
+        <LoadingSpinner v-show="isLoading" />
     </div>
 </template>
 
@@ -147,6 +221,7 @@ onBeforeUnmount(() => {
 
     padding: 100px 0px;
     max-width: 900px;
+    min-height: 100vh;
 }
 
 #product-view img {
@@ -225,51 +300,12 @@ input[type="radio"] {
 }
 
 
-
-/* MODE OF PAYMENT SELECTOR STYLE */
-.mode-of-payment-wrapper {
-    margin-top: 0.5rem;
-}
-
-.payment-label {
-    display: flex;
-    align-items: center;
-    gap: 0.8rem;
-
-    background: white;
-    border: 1px solid black;
-    border-radius: 5px;
-    transition: all 0.3s ease;
-    padding: 15px 25px;
-    cursor: pointer;
-}
-
-.payment-label:hover {
-    border: 1px solid var(--primary-color);
-    background: rgb(205, 240, 205);
-}
-
-.payment-label:has(.payment-field:checked) {
-    border: 1px solid var(--primary-color);
-    background: rgb(205, 240, 205);
-}
-
-.payment-label .fa-truck {
-    font-size: 1.4rem;
-}
-
-.description-wrapper {
-    display: flex;
-    flex-direction: column;
-}
-
-
 /* FOOTER STYLE */
 footer {
     display: flex;
     align-items: center;
 
-    margin-top: 1.5rem;
+    margin-top: 3rem;
     gap: 0.5rem;
 }
 

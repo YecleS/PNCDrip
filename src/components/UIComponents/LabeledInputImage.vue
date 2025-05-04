@@ -1,32 +1,45 @@
 <script setup>
-defineProps({
+import { watch, ref } from 'vue';
+
+const props = defineProps({
     modelValue: {
-        type: String
+        type: [File, String],
     }
 });
 const emit = defineEmits(['update:modelValue']);
 
-const previewImage = (event) => {
+const fileInput = ref(null);
+const imagePreview = ref(null);
+
+const handleFileChange = (event) => {
     const file = event.target.files[0];
     if (file) {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            emit('update:modelValue', e.target.result); // emit to parent
-        };
-        reader.readAsDataURL(file);
+        imagePreview.value = URL.createObjectURL(file);
+        emit('update:modelValue', file);
     }
-};
+}
+
+// Watch modelValue to clear the input if it's empty
+watch(() => props.modelValue, (newValue) => {
+    if (!newValue && fileInput.value) {
+        fileInput.value.value = '';
+    }
+});
+
+
+
 </script>
 
 <template>
     <div class="labeled-input-image">
         <div class="image-container">
-            <img v-if="modelValue" :src="modelValue" alt="Image Preview" class="image-preview" />
+            <img v-if="modelValue" :src="imagePreview" alt="Image Preview" class="image-preview" />
             <div v-else class="image-placeholder">No image selected</div>
         </div>
 
         <p class="label-text">Insert Image</p>
-        <input type="file" id="product-image" name="product-image" class="file-input" @change="previewImage" />
+        <input type="file" id="product-image" name="product-image" class="file-input" ref="fileInput"
+            accept="image/jpeg, image/png, image/jpg, image/webp" @change="handleFileChange" />
     </div>
 </template>
 

@@ -1,8 +1,25 @@
 <script setup>
+import { ref, onMounted } from 'vue';
+import axios from 'axios';
 import PrimaryButton from '@/components/UIComponents/PrimaryButton.vue';
-import DummyProducts from '../assets/dummy_products.json';
 import ProductCard from '@/components/UIComponents/ProductCard.vue';
+import LoadingSpinner from '@/components/UIComponents/LoadingSpinner.vue';
 
+const products = ref([]);
+const isLoading = ref(true);
+
+const fetchProducts = async () => {
+  try {
+    const response = await axios.get('http://localhost:8000/api/products/');
+    products.value = response.data;
+  } catch (error) {
+    console.error('Error fetching products:', error);
+  } finally {
+    isLoading.value = false;
+  }
+};
+
+onMounted(fetchProducts);
 
 </script>
 
@@ -21,10 +38,10 @@ import ProductCard from '@/components/UIComponents/ProductCard.vue';
         </a>
       </div>
 
+      <LoadingSpinner v-if="isLoading" />
+
       <div class="product-card-wrapper">
-        <ProductCard v-for="product in DummyProducts.slice(0, 8)" :key="product.name" :product-image="product.image"
-          :product-name="product.name" :product-description="product.description" :product-price="product.price"
-          :product-stock="product.stock" />
+        <ProductCard v-for="product in products.slice(0, 8)" :key="product.id" :products="product" />
       </div>
     </section>
   </div>

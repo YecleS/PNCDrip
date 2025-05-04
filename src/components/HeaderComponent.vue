@@ -5,7 +5,7 @@ import PrimaryButton from './UIComponents/PrimaryButton.vue';
 import { useAuth } from '@/composables/useAuth';
 import router from '@/router';
 
-const { username, role, clearAuthData } = useAuth();
+const { userID, username, role, clearAuthData } = useAuth();
 
 const isProfileMenuVisible = ref(false);
 const profileRef = ref(null);
@@ -51,17 +51,16 @@ const logout = () => {
             <nav>
                 <a href="/">Home</a>
                 <a href="/shop">Shop</a>
-                <a href="#">Orders</a>
-                <a href="#">Checkouts</a>
+                <a href="/orders">Orders</a>
+                <a href="/checkout" v-if="role === 'employee'">Checkouts</a>
             </nav>
 
             <div class="header__controllers-wrapper">
-                <a href="/cart" v-show="!!username">
-                    <i class="fa-solid fa-cart-shopping" aria-label="Cart icon"></i>
-                </a>
+                <RouterLink :to="`/cart/${userID}`">
+                    <i class="fa-solid fa-cart-shopping" aria-label="Cart icon" v-if="!!userID"></i>
+                </RouterLink>
 
-
-                <div class="header__profile-wrapper" ref="profileRef" @click="toggleProfileMenu" v-show="!!username">
+                <div class="header__profile-wrapper" ref="profileRef" @click="toggleProfileMenu" v-if="!!username">
                     <span>
                         <i class="fa-solid fa-user-large"></i>
                     </span>
